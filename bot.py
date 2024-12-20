@@ -225,21 +225,14 @@ def process_file(message):
     file_url = None
     if message.document:
         file_id = message.document.file_id
-        try:
-            file_info = bot.get_file(file_id)
-            file_path = file_info.file_path
-            filename = message.document.file_name
-            if message_text and message_text!=filename:
-                splitted_message = message_text.split(" ",1)
-                if len(splitted_message)>1:
-                    file_name_from_message = splitted_message[1]
-
-            file_url = f"https://api.telegram.org/file/bot{config.TOKEN}/{file_path}"
-        except Exception as e:
-            logger.error(f"Error getting telegram file info: {e}")
-            bot.reply_to(message, "Sorry, could not get the file info from telegram.")
-            return
-
+        filename = message.document.file_name
+        if message_text and message_text!=filename:
+            splitted_message = message_text.split(" ",1)
+            if len(splitted_message)>1:
+                file_name_from_message = splitted_message[1]
+        
+        file_url = f"https://api.telegram.org/file/bot{config.TOKEN}/{bot.get_file(file_id).file_path}"
+    
     elif message_text and re.match(r'https?://\S+', message_text):
         splitted_message = message_text.split(" ", 1)
         if len(splitted_message) > 1:
