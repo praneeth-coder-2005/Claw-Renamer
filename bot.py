@@ -229,10 +229,10 @@ def process_file(message):
         if message_text and message_text!=filename:
             splitted_message = message_text.split(" ",1)
             if len(splitted_message)>1:
-                file_name_from_message = splitted_message[1]
+               file_name_from_message = splitted_message[1]
         
         file_url = f"https://api.telegram.org/file/bot{config.TOKEN}/{bot.get_file(file_id).file_path}"
-    
+
     elif message_text and re.match(r'https?://\S+', message_text):
         splitted_message = message_text.split(" ", 1)
         if len(splitted_message) > 1:
