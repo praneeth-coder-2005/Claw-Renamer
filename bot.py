@@ -215,6 +215,20 @@ def download_file(
         )
         return None
 
+def get_file_path(file_id, bot_token):
+    """Constructs the file path from the file ID without bot.get_file"""
+    try:
+        response = requests.get(f"https://api.telegram.org/bot{bot_token}/getFile?file_id={file_id}")
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+        file_path_result = response.json()
+        if file_path_result["ok"]:
+            return file_path_result["result"]["file_path"]
+        else:
+          logger.error(f"Error getting file path {file_path_result}")
+          return None
+    except requests.exceptions.RequestException as e:
+          logger.error(f"Error constructing the telegram file path: {e}")
+          return None
 
 @bot.message_handler(func=lambda message: True, content_types=["text", "document"])
 def process_file(message):
@@ -230,8 +244,12 @@ def process_file(message):
             splitted_message = message_text.split(" ",1)
             if len(splitted_message)>1:
                file_name_from_message = splitted_message[1]
-        
-        file_url = f"https://api.telegram.org/file/bot{config.TOKEN}/{bot.get_file(file_id).file_path}"
+        file_path = get_file_path(file_id,config.TOKEN)
+        if file_path:
+            file_url = f"https://api.telegram.org/file/bot{config.TOKEN}/{file_path}"
+        else:
+            bot.reply_to(message, "Sorry, could not process the file from telegram.")
+            return
 
     elif message_text and re.match(r'https?://\S+', message_text):
         splitted_message = message_text.split(" ", 1)
