@@ -225,39 +225,28 @@ def process_file(message):
     file_url = None
     if message.document:
         file_id = message.document.file_id
-        file_info = bot.get_file(file_id)
-        file_path = file_info.file_path
         try:
+            file_info = bot.get_file(file_id)
+            file_path = file_info.file_path
             filename = message.document.file_name
-            if message_text and message_text!=filename :
+            if message_text and message_text!=filename:
                 splitted_message = message_text.split(" ",1)
                 if len(splitted_message)>1:
                     file_name_from_message = splitted_message[1]
-            with requests.get(f"https://api.telegram.org/file/bot{config.TOKEN}/{file_path}", stream=True) as r:
-                r.raise_for_status()
-                local_filename = os.path.join("downloads",filename)
-                os.makedirs(os.path.dirname(local_filename), exist_ok=True)
-                with open(local_filename, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        if chunk:
-                            f.write(chunk)
-                file_url = local_filename
-            
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error downloading telegram file: {e}")
-            bot.reply_to(
-                message, "Sorry, could not download telegram file."
-            )
+
+            file_url = f"https://api.telegram.org/file/bot{config.TOKEN}/{file_path}"
+        except Exception as e:
+            logger.error(f"Error getting telegram file info: {e}")
+            bot.reply_to(message, "Sorry, could not get the file info from telegram.")
             return
-    
+
     elif message_text and re.match(r'https?://\S+', message_text):
-        splitted_message = message_text.split(" ",1)
-        if len(splitted_message)>1:
+        splitted_message = message_text.split(" ", 1)
+        if len(splitted_message) > 1:
             file_url = splitted_message[0]
             file_name_from_message = splitted_message[1]
         else:
             file_url = splitted_message[0]
-    
     else:
         bot.reply_to(message, "Please send a file or a valid download link.")
         return
@@ -269,6 +258,7 @@ def process_file(message):
         local_file_path = download_file(message, file_url, file_name_from_message)
     else:
         local_file_path = file_url
+
     if local_file_path is None:
         return
 
@@ -277,12 +267,12 @@ def process_file(message):
         filename = os.path.basename(local_file_path)
         file_ext = os.path.splitext(filename)[1]
         if settings["rename_mode"] == "manual":
-            if file_name_from_message:
-               renamed_file = sanitize_filename(file_name_from_message)
-            else:
-                renamed_file = sanitize_filename(filename)
-            if not renamed_file.lower().endswith(file_ext.lower()):
-               renamed_file += file_ext
+           if file_name_from_message:
+                renamed_file = sanitize_filename(file_name_from_message)
+           else:
+               renamed_file = sanitize_filename(filename)
+           if not renamed_file.lower().endswith(file_ext.lower()):
+                renamed_file += file_ext
         elif settings["rename_mode"] == "auto":
             renamed_file = sanitize_filename(filename)
             if settings["prefix"]:
@@ -314,7 +304,7 @@ def process_file(message):
         bot.reply_to(message, "An unexpected error occurred.")
     finally:
         if local_file_path and os.path.exists(renamed_file_path):
-            os.remove(renamed_file_path)
+          os.remove(renamed_file_path)
 
 def main():
     """Start the bot."""
